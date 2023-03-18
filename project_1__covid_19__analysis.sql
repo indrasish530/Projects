@@ -311,3 +311,70 @@ where dea.continent is not null ;
 
 
 select * from PercentPopulationVaccinatedview;
+
+
+
+-----creating view for visualizations in tableau
+
+--1.
+
+create or replace table total_death_count as
+select SUM(new_cases) as total_cases, SUM(new_deaths) as total_deaths,SUM(new_deaths)/SUM(New_Cases)*100 as DeathPercentage
+From Covid_Deaths
+order by 1,2;
+
+alter table total_death_count
+add column location varchar(50);
+update total_death_count
+set location = 'World';
+
+create or replace view total_death_count2 as
+select * from total_death_count;
+
+select * from total_death_count;
+
+
+
+
+
+-- 2. 
+
+-- We take these out as they are not inluded in the above queries and want to stay consistent
+-- European Union is part of Europe
+create or replace view continents_total_death as
+Select location, SUM(new_deaths) as TotalDeathCount
+From Covid_Deaths
+Where continent is null 
+and location not in ('World', 'European Union', 'International')
+Group by 1
+order by 2 desc;
+
+
+select * from continents_total_death;
+
+-- 3.removing all the null values for better visualizations
+
+create or replace view total_percentage_infected_country as
+Select Location, Population, MAX(total_cases) as HighestInfectionCount,  Max((total_cases/population))*100 as PercentPopulationInfected
+From Covid_Deaths
+Group by 1,2
+having population is not null and HighestInfectionCount is not null and PercentPopulationInfected is not null
+order by 3 desc;
+
+select * from total_percentage_infected_country;
+
+
+
+-- 4.removing all the null values for better visualizations
+
+
+create or replace view highest_covid as
+Select Location, Population,date, MAX(total_cases) as HighestInfectionCount,  Max((total_cases/population))*100 as PercentPopulationInfected
+From Covid_Deaths
+Group by 1,2,3
+having HighestInfectionCount is not null and PercentPopulationInfected is not null
+order by 4 desc;
+
+select * from  highest_covid;
+
+
